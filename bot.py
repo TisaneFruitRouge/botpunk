@@ -9,7 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 
-browser = webdriver.Chrome('C:\\Users\\vince\\Downloads\\chromedriver')
+browser = webdriver.Chrome('the-path-to-your-chrome-driver')
 browser.maximize_window() #For maximizing window
 browser.implicitly_wait(1) #gives an implicit wait for 1 seconds
 
@@ -25,9 +25,9 @@ languages = {'fr':{'link':'fr/', 'login':'Connexion'},
 			'fi':{'link':'fi/', 'login':'Kirjaudu sisään'}}
 
 
-username = 'TestBot' #your username
-password = 'vincevince' #your password
-lg_depart = 'en'
+username = 'your-username' #your username
+password = 'your-password' #your password
+lg_depart = 'fr'
 
 user_home_page = 'https://www.jetpunk.com/'+languages[lg_depart]['link']+'user-stats'#user's home page where we'll get get the 
 																					 #links to all the quizzes
@@ -41,7 +41,7 @@ LIST_EXCLUDE = ['isName', 'mode', 'cols', 'typeins', 'fn', 'url', 'thumb', 'yell
 
 #------------ Functions -------------
 
-def shit_to_list(self, my_list):
+def shit_to_list(browser, my_list):
 	'''Transforms a list with a lot of useless things into a more readable list'''
 
 	new_list = []
@@ -66,7 +66,7 @@ def shit_to_list(self, my_list):
 
 	return new_list
 
-def get_answers(self, quizz_link):
+def get_answers(browser, quizz_link):
 
 
 	r = requests.get(quizz_link, auth=(username, password)) 
@@ -90,11 +90,11 @@ def get_answers(self, quizz_link):
 	raw_answers = re.findall(pattern3, string_reponses) #finding answers
 
 
-	answers = shit_to_list(raw_answers)#creating the list of answers
+	answers = shit_to_list(browser, raw_answers)#creating the list of answers
 
 	return answers
 
-def connexion(self, username, password, lg_depart):
+def connexion(browser, username, password, lg_depart):
 	browser.get(user_home_page)
 
 	connexion = browser.find_element_by_link_text(languages[lg_depart]['login']) 
@@ -124,9 +124,9 @@ def connexion(self, username, password, lg_depart):
 	login_button = div_login_button.find_element_by_tag_name('button')
 	login_button.click()
 
-def get_links(self):
-	all_quizzs = browser.find_element_by_xpath('//*[@id="inner-page"]/div[3]/div/div[1]/div/div[3]/div[1]/div[4]') #use this to find untaken quizzes
-	#all_quizzs = browser.find_element_by_xpath('/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[3]/div[1]/div[2]') #use this to find all quizzes
+def get_links(browser):
+	#all_quizzs = browser.find_element_by_xpath('//*[@id="inner-page"]/div[3]/div/div[1]/div/div[3]/div[1]/div[4]') #use this to find untaken quizzes
+	all_quizzs = browser.find_element_by_xpath('/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[3]/div[1]/div[2]') #use this to find all quizzes
 
 	all_quizzs.click()
 
@@ -140,14 +140,14 @@ def get_links(self):
 
 	return quizz_links
 
-def complete_quizz(self,link):
+def complete_quizz(browser,link):
 
 	browser.get(link)
 
 	start_button = browser.find_element_by_id('start-button') #finding the start button
 	start_button.click()
 
-	answers = get_answers(link) #getting the answers
+	answers = get_answers(browser, link) #getting the answers
 
 	input_box = browser.find_element_by_id('txt-answer-box')
 
@@ -162,7 +162,7 @@ def complete_quizz(self,link):
 	abandon_button = browser.find_element_by_xpath('/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[2]/div[5]/div/div[1]/div[1]/div[2]')
 	abandon_button.click() #abandoning when all the answers were submitted
 
-def complete_all(self, links):
+def complete_all(browser, links):
 
 	failed_quizzs = 0
 
@@ -173,9 +173,10 @@ def complete_all(self, links):
 	for link in links: #going through all the links to solve the quizzes
 		try : 
 			complete_quizz(browser, link)
-		except : 
+		except Exception as e: 
 			failed_quizzs += 1
 			print(link) #there might be an error
+			print(e)
 			print('Le quizz {} n\'a pas pu être completé :('.format(link))
 		finally :
 			i+=1
@@ -184,7 +185,7 @@ def complete_all(self, links):
 	print('fini!')
 	return failed_quizzs
 
-def solve_for_language(self, lg):
+def solve_for_language(browser, lg):
 
 	links = get_links(browser)
 
@@ -194,19 +195,24 @@ def solve_for_language(self, lg):
 	print('{} quizzs loupés\n'.format(failed_quizzs))
 	print('Fini pour '+ lg)
 
+def solve_for_all_languages(browser, lg_depart):
+
+	for key in languages:
+
+		if key == lg_depart: continue
+
+		browser.get('https://www.jetpunk.com/'+languages[key]['link']+'user-stats')
+
+		solve_for_language(browser, key)
+
+	print('fin')
+
 #------------------------------------
 
 connexion(browser, username, password, lg_depart)
 
-for key in languages:
+solve_for_all_languages(browser, lg_depart)
 
-	if key == lg_depart: continue
-
-	browser.get('https://www.jetpunk.com/'+languages[key]['link']+'user-stats')
-
-	solve_for_language(browser, key)
-
-print('fin')
 
 os.system('pause')
 
