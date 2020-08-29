@@ -9,7 +9,7 @@ setup(
   author = 'Vincent WENDLING',                   
   author_email = 'vincent.wendling@lilo.org',     
   url = 'https://github.com/TisaneFruitRouge/botpunk',   
-  download_url = 'https://github.com/TisaneFruitRouge/botpunk/archive/v_02.tar.gz',    
+  download_url = 'https://github.com/TisaneFruitRouge/botpunk/archive/v_03.tar.gz',    
   keywords = ['BOT', 'QUIZZES', 'JETPUNK'],   
   install_requires=[            
           'selenium',
