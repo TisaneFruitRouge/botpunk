@@ -8,8 +8,8 @@ setup(
   description = 'A bot that solves quizzes for you',   
   author = 'Vincent WENDLING',                   
   author_email = 'vincent.wendling@lilo.org',     
-  url = 'https://github.com/TisaneFruitRouge/jetpunk-bot',   
-  download_url = 'https://github.com/TisaneFruitRouge/jetpunk-bot/archive/v_01.tar.gz',    
+  url = 'https://github.com/TisaneFruitRouge/botpunk',   
+  download_url = 'https://github.com/TisaneFruitRouge/botpunk/archive/v_01.tar.gz',    
   keywords = ['BOT', 'QUIZZES', 'JETPUNK'],   
   install_requires=[            
           'selenium',
