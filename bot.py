@@ -9,12 +9,15 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 
-browser = webdriver.Chrome('the-path-to-your-chrome-driver')
-browser.maximize_window() #For maximizing window
-browser.implicitly_wait(1) #gives an implicit wait for 1 seconds
 
+LIST_EXCLUDE = ['isName', 'mode', 'cols', 'typeins', 'fn', 'url', 'thumb', 'yellowBox', 'clickId', 'mobileMode',
+				'svg', 'statHeaders', 'answerColIdx', 'isTablet', 'recommendedTypeins', 'moderate', 'whatkind',
+				'private', 'preview', 'ext', 'customType', 'rating', 'searchlevel', 'triggers', 'nominations',
+				'subscribeScreen', 'dotX', 'dotY', 'path', 'svgHeight', 'svgWidth', 'svgHiddenPaths', 
+				'missingDotsTextShow', 'missingDotsTextHide', 'hint', 'image', 'display', 'answerOrder',
+				'numRandom', 'sortOrder', 'tableOrder', 'x'] #we don't want this stuff in our answers
 
-languages = {'fr':{'link':'fr/', 'login':'Connexion'}, 
+dic_languages = {'fr':{'link':'fr/', 'login':'Connexion'}, 
 			'en':{'link':'', 'login':'Login'}, 
 			'it':{'link':'it/', 'login':'Login'}, 
 			'es':{'link':'es/', 'login':'Conéctate'}, 
@@ -24,22 +27,6 @@ languages = {'fr':{'link':'fr/', 'login':'Connexion'},
 			'pt':{'link':'pt/', 'login':'Logar'}, 
 			'fi':{'link':'fi/', 'login':'Kirjaudu sisään'}}
 
-
-username = 'your-username' #your username
-password = 'your-password' #your password
-lg_depart = 'fr'
-
-user_home_page = 'https://www.jetpunk.com/'+languages[lg_depart]['link']+'user-stats'#user's home page where we'll get get the 
-																					 #links to all the quizzes
-
-LIST_EXCLUDE = ['isName', 'mode', 'cols', 'typeins', 'fn', 'url', 'thumb', 'yellowBox', 'clickId', 'mobileMode',
-				'svg', 'statHeaders', 'answerColIdx', 'isTablet', 'recommendedTypeins', 'moderate', 'whatkind',
-				'private', 'preview', 'ext', 'customType', 'rating', 'searchlevel', 'triggers', 'nominations',
-				'subscribeScreen', 'dotX', 'dotY', 'path', 'svgHeight', 'svgWidth', 'svgHiddenPaths', 
-				'missingDotsTextShow', 'missingDotsTextHide', 'hint', 'image', 'display', 'answerOrder',
-				'numRandom', 'sortOrder', 'tableOrder', 'x'] #we don't want this stuff in our answers
-
-#------------ Functions -------------
 
 def shit_to_list(browser, my_list):
 	'''Transforms a list with a lot of useless things into a more readable list'''
@@ -69,7 +56,7 @@ def shit_to_list(browser, my_list):
 def get_answers(browser, quizz_link):
 
 
-	r = requests.get(quizz_link, auth=(username, password)) 
+	r = requests.get(quizz_link) 
 	page_content = r.content
 
 	soup = BeautifulSoup(page_content, 'html.parser')
@@ -84,45 +71,15 @@ def get_answers(browser, quizz_link):
 	string_reponses = script_text[index_reponses-1:].replace('<br \/>', '')#getting rid of strings and characters we don't want
 	s = string_reponses.encode(encoding='UTF-8',errors='strict') #pretty sure this part is useless too
 
-	pattern3 = ',"[-A-Za-z0-9\s \\\ \{\}]+"|\{[-A-Za-z0-9\s \\\]+\}'#using regular expressions to find the answers
+	pattern = ',"[-A-Za-z0-9\s \\\ \{\}]+"|\{[-A-Za-z0-9\s \\\]+\}'#using regular expressions to find the answers
 																	
 
-	raw_answers = re.findall(pattern3, string_reponses) #finding answers
+	raw_answers = re.findall(pattern, string_reponses) #finding answers
 
 
 	answers = shit_to_list(browser, raw_answers)#creating the list of answers
 
 	return answers
-
-def connexion(browser, username, password, lg_depart):
-	browser.get(user_home_page)
-
-	connexion = browser.find_element_by_link_text(languages[lg_depart]['login']) 
-	connexion.click()
-
-	inputs_div = browser.find_elements_by_class_name('row') #finding rows that contain the login inputs
-
-	username_input = None
-	password_input = None
-
-	list_inputs = []
-
-	for elem in inputs_div :
-			input = elem.find_elements_by_tag_name('input') 
-			if input == [] :
-				pass
-			else :
-				list_inputs.append(input)
-
-	username_input = list_inputs[0][0]
-	password_input = list_inputs[1][0]
-
-	username_input.send_keys(username)
-	password_input.send_keys(password)
-
-	div_login_button = browser.find_element_by_xpath('//*[@id="login-modal"]/div/div[2]/div[3]')
-	login_button = div_login_button.find_element_by_tag_name('button')
-	login_button.click()
 
 def get_links(browser):
 	#all_quizzs = browser.find_element_by_xpath('//*[@id="inner-page"]/div[3]/div/div[1]/div/div[3]/div[1]/div[4]') #use this to find untaken quizzes
@@ -195,25 +152,90 @@ def solve_for_language(browser, lg):
 	print('{} quizzs loupés\n'.format(failed_quizzs))
 	print('Fini pour '+ lg)
 
-def solve_for_all_languages(browser, lg_depart):
+class JetPunkBot:
 
-	for key in languages:
+	def __init__(self, username, password, PATH=''):
 
-		if key == lg_depart: continue
+		self.PATH = PATH #The path to your chrome driver
 
-		browser.get('https://www.jetpunk.com/'+languages[key]['link']+'user-stats')
+		self.browser = None
 
-		solve_for_language(browser, key)
-
-	print('fin')
-
-#------------------------------------
-
-connexion(browser, username, password, lg_depart)
-
-solve_for_all_languages(browser, lg_depart)
+		self.username = username
+		self.password = password
+		
 
 
-os.system('pause')
+	def connexion(self, lg_depart):
+
+		self.browser = webdriver.Chrome(self.PATH)
+		self.browser.maximize_window() #For maximizing window
+		self.browser.implicitly_wait(1) #gives an implicit wait for 1 seconds
 
 
+		user_home_page = 'https://www.jetpunk.com/'+dic_languages[lg_depart]['link']+'user-stats'#user's home page where we'll get get the 
+																					 		#links to all the quizzes
+		self.browser.get(user_home_page)
+
+		connexion = self.browser.find_element_by_link_text(dic_languages[lg_depart]['login']) 
+		connexion.click()
+
+		inputs_div = self.browser.find_elements_by_class_name('row') #finding rows that contain the login inputs
+
+		username_input = None
+		password_input = None
+
+		list_inputs = []
+
+		for elem in inputs_div :
+				input = elem.find_elements_by_tag_name('input') 
+				if input == [] :
+					pass
+				else :
+					list_inputs.append(input) #finds the input fields where the username and the password need to be put
+
+		username_input = list_inputs[0][0]
+		password_input = list_inputs[1][0]
+
+		username_input.send_keys(self.username)
+		password_input.send_keys(self.password)
+
+		div_login_button = self.browser.find_element_by_xpath('//*[@id="login-modal"]/div/div[2]/div[3]')
+		login_button = div_login_button.find_element_by_tag_name('button')
+		login_button.click()
+
+
+	def run(self, languages='all'):
+		'''
+			runs the bot
+			languages= 'all' => quizzes will be resolved for all the languages
+					 = 'en-fr-fi' => quizzes will be solved only for those languaes
+		'''
+		self.connexion('en')
+
+		if languages=='all':
+
+			for key in dic_languages:
+
+				self.browser.get('https://www.jetpunk.com/'+dic_languages[key]['link']+'user-stats')
+				solve_for_language(self.browser, key)
+				print('Done for : {}'.format(keu))
+
+		else :
+
+			list_lang = languages.split('-')
+
+			for lang in list_lang : 
+				if lang not in dic_languages.keys() : 
+					print('One of the languages is not valid')
+					raise Exception
+
+
+			for lang in list_lang:
+
+				self.browser.get('https://www.jetpunk.com/'+dic_languages[key]['link']+'user-stats')
+				solve_for_language(self.browser, key)
+				print('Done for : {}'.format(keu))
+
+
+#j = JetPunkBot('your-username', 'your-password', 'the-path-to-your-chrome-driver')
+#j.run()
