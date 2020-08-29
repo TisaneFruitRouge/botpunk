@@ -1,1 +1,1 @@
-from botpunk.bot import *
+from bot import *
