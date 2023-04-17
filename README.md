@@ -1,11 +1,13 @@
 # jetpunk-bot
 A bot that completes jetpunk quizzes automatically
 
-
+Import the library with:
+import BOTPUNK
 
 Create the bot with :
 
-my_bot = JetPunkBot(username, password, pathtochromedriver)
+my_bot = BOTPUNK.bot.BotPunk(username, password, pathtochromedriver)
+
 
 then run it with :
 

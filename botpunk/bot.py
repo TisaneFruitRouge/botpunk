@@ -8,6 +8,7 @@ import selenium as se
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
+from selenium.webdriver.common.by import By
 
 
 LIST_EXCLUDE = ['isName', 'mode', 'cols', 'typeins', 'fn', 'url', 'thumb', 'yellowBox', 'clickId', 'mobileMode',
@@ -54,8 +55,7 @@ def shit_to_list(browser, my_list):
 	return new_list
 
 def get_answers(browser, quizz_link):
-
-
+	'''Get the answers from the html code of the webpage'''
 	r = requests.get(quizz_link) 
 	page_content = r.content
 
@@ -63,9 +63,8 @@ def get_answers(browser, quizz_link):
 	soup.script.encode("utf-8")
 
 
-	scripts = soup.find_all('script', type='text/javascript') #Answers are un a script tag 
-	var_reponses = scripts[0]
-
+	scripts = soup.find_all('script', type='text/javascript') #Answers are in a script tag
+	var_reponses = scripts[1]
 	script_text = str(list(var_reponses)[0]).replace('var _page = ', '') 
 	index_reponses = script_text.find('answers')
 	string_reponses = script_text[index_reponses-1:].replace('<br \/>', '')#getting rid of strings and characters we don't want
@@ -82,13 +81,16 @@ def get_answers(browser, quizz_link):
 	return answers
 
 def get_links(browser):
+	'''Get the links to all the quizzes for a certain language'''
+
+
 	#all_quizzs = browser.find_element_by_xpath('//*[@id="inner-page"]/div[3]/div/div[1]/div/div[3]/div[1]/div[4]') #use this to find untaken quizzes
-	all_quizzs = browser.find_element_by_xpath('/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[3]/div[1]/div[2]') #use this to find all quizzes
+	all_quizzs = browser.find_element(By.XPATH, '/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[3]/div[1]/div[2]')  # use this to find all quizzes
 
-	all_quizzs.click()
+	#all_quizzs.click()
 
-	quizzs_table = browser.find_element_by_tag_name('tbody') 
-	quizz_link_elements = quizzs_table.find_elements_by_tag_name('a') #getting links' <a> 
+	quizzs_table = browser.find_element(By.TAG_NAME, 'tbody')
+	quizz_link_elements = quizzs_table.find_elements(By.TAG_NAME, 'a')  # getting links' <a>
 	quizz_links = []
 
 	for link in quizz_link_elements :
@@ -98,15 +100,16 @@ def get_links(browser):
 	return quizz_links
 
 def complete_quizz(browser,link):
+	'''Completes a quizz'''
 
 	browser.get(link)
 
-	start_button = browser.find_element_by_id('start-button') #finding the start button
+	start_button = browser.find_element(By.ID, 'start-button')  # finding the start button
 	start_button.click()
 
 	answers = get_answers(browser, link) #getting the answers
 
-	input_box = browser.find_element_by_id('txt-answer-box')
+	input_box = browser.find_element(By.ID, 'txt-answer-box')
 
 	for answer in answers:
 		answer.replace('\\\\', '\\').replace('\\u00e9', 'é')
@@ -116,21 +119,19 @@ def complete_quizz(browser,link):
 		input_box.send_keys(answer)
 		input_box.clear()
 
-	abandon_button = browser.find_element_by_xpath('/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[2]/div[5]/div/div[1]/div[1]/div[2]')
+	abandon_button = browser.find_element(By.CLASS_NAME, 'give-up')
 	abandon_button.click() #abandoning when all the answers were submitted
 
 def complete_all(browser, links):
+	'''Complete all the quizzes for a certain language'''
 
-	
 	size = len(links)
 
 	for link in links: #going through all the links to solve the quizzes
-		try : 
+		try:
 			complete_quizz(browser, link)
-		except : 
+		except:
 			pass
-
-	return failed_quizzs
 
 def solve_for_language(browser):
 
@@ -177,10 +178,11 @@ class BotPunk:
 																					 		#links to all the quizzes
 		self.browser.get(user_home_page)
 
-		connexion = self.browser.find_element_by_link_text(dic_languages[lg_depart]['login']) 
+		connexion = self.browser.find_element(By.CLASS_NAME, "login-link")
+
 		connexion.click()
 
-		inputs_div = self.browser.find_elements_by_class_name('row') #finding rows that contain the login inputs
+		inputs_div = self.browser.find_elements(By.CLASS_NAME, "row") #finding rows that contain the login inputs
 
 		username_input = None
 		password_input = None
@@ -188,7 +190,7 @@ class BotPunk:
 		list_inputs = []
 
 		for elem in inputs_div :
-				input = elem.find_elements_by_tag_name('input') 
+				input = elem.find_elements(By.TAG_NAME, 'input')
 				if input == [] :
 					pass
 				else :
@@ -200,8 +202,8 @@ class BotPunk:
 		username_input.send_keys(self.username)
 		password_input.send_keys(self.password)
 
-		div_login_button = self.browser.find_element_by_xpath('//*[@id="login-modal"]/div/div[2]/div[3]')
-		login_button = div_login_button.find_element_by_tag_name('button')
+		div_login_button = self.browser.find_element(By.XPATH, '//*[@id="login-modal"]/div/div[2]/div[3]')
+		login_button = div_login_button.find_element(By.TAG_NAME, 'button')
 		login_button.click()
 
 
@@ -226,13 +228,13 @@ class BotPunk:
 
 			for lang in list_lang : 
 				if lang not in dic_languages.keys() : 
-					raise Exception
+					raise LanguageError(lang)
 
 
 			for lang in list_lang:
 
-				self.browser.get('https://www.jetpunk.com/'+dic_languages[key]['link']+'user-stats')
-				solve_for_language(self.browser, key)
+				self.browser.get('https://www.jetpunk.com/'+dic_languages[lang]['link']+'user-stats')
+				solve_for_language(self.browser)
 
 
 #j = BotPunk('your-username', 'your-password', 'the-path-to-your-chrome-driver')
