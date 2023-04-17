@@ -83,9 +83,10 @@ def get_answers(browser, quizz_link):
 def get_links(browser):
 	'''Get the links to all the quizzes for a certain language'''
 
+	untaken = browser.find_element(By.XPATH, "//div[@class='quiz-stats-header']/div[1]/div[4]")
+	untaken.click()
 
-	#all_quizzs = browser.find_element_by_xpath('//*[@id="inner-page"]/div[3]/div/div[1]/div/div[3]/div[1]/div[4]') #use this to find untaken quizzes
-	all_quizzs = browser.find_element(By.XPATH, '/html/body/div/div/div[2]/div[3]/div/div[1]/div/div[3]/div[1]/div[2]')  # use this to find all quizzes
+	all_quizzs = browser.find_element(By.XPATH, "//div[@class='user-stat-table']") # use this to find all quizzes
 
 	#all_quizzs.click()
 
