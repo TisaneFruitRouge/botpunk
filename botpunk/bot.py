@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 
 
 LIST_EXCLUDE = ['isName', 'mode', 'cols', 'typeins', 'fn', 'url', 'thumb', 'yellowBox', 'clickId', 'mobileMode',
@@ -85,6 +86,9 @@ def get_links(browser):
 
 	untaken = browser.find_element(By.XPATH, "//div[@class='quiz-stats-header']/div[1]/div[4]")
 	untaken.click()
+
+	select = Select(browser.find_element(By.ID, "tag-selector"))
+	select.select_by_value("-13")
 
 	all_quizzs = browser.find_element(By.XPATH, "//div[@class='user-stat-table']") # use this to find all quizzes
 
