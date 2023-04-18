@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
   name = 'punkbot',         
   packages = ['PUNKBOT'],   
-  version = '0.3',      
+  version = '0.5',      
   license='MIT',        
   description = 'A bot that solves quizzes for you',   
   author = 'Vincent WENDLING',                   
